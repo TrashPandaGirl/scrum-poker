@@ -191,6 +191,7 @@ export default function Room({ code, name, onLeave }) {
             <div className="seats">
               {estimators.map((pName, i) => {
                 const voted = votes[pName] !== null
+                const crown = crownFor(pName)
                 return (
                   <div className="seat" key={pName}>
                     <div className="seat__slot">
@@ -203,10 +204,13 @@ export default function Room({ code, name, onLeave }) {
                       ) : (
                         <div className="seat__empty" />
                       )}
+                      {crown && <div className="seat__crown">{crown}</div>}
                     </div>
                     <div className="seat__label">
-                      {crownFor(pName)}
-                      <span className="seat__name">
+                      <span
+                        className="seat__name"
+                        title={pName === name ? `${pName} (du)` : pName}
+                      >
                         {pName}
                         {pName === name && ' (du)'}
                       </span>

@@ -400,7 +400,7 @@ select:focus {
 .seats {
   display: flex;
   flex-wrap: wrap;
-  gap: 22px 28px;
+  gap: 20px 22px;
   justify-content: center;
   align-items: flex-end;
 }
@@ -410,6 +410,7 @@ select:focus {
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  width: 72px; /* feste Breite → gleichmäßiger Umbruch unabhängig von Namenslänge */
 }
 
 /* Leere Ablage – zeigt, wer noch nicht geschätzt hat */
@@ -417,6 +418,23 @@ select:focus {
   width: 64px;
   height: 92px;
   perspective: 700px;
+  position: relative;
+}
+
+/* Admin-Krone als Eck-Badge, damit der Name die volle Sitzbreite behält */
+.seat__crown {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 5;
+}
+
+.seat__crown .crown-btn,
+.seat__crown .crown-badge {
+  width: 26px;
+  height: 26px;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 .seat__empty {
@@ -434,7 +452,7 @@ select:focus {
   color: #eef2ff;
   font-weight: 600;
   font-size: 0.9rem;
-  max-width: 120px;
+  max-width: 100%;
 }
 
 .seat__name {
