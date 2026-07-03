@@ -1,0 +1,17 @@
+rules_version = '2';
+
+// Regeln für die Scrum-Poker-Collection im Projekt epicscrummasterkastl.
+// WICHTIG: Beim Deploy per CLI wird das GESAMTE Ruleset des Projekts ersetzt.
+// Wenn EpicScrumMasterKastl eigene Collections nutzt, müssen deren match-Blöcke
+// hier mit aufgenommen werden — sonst nur diesen Block in der Firebase Console
+// zum bestehenden Ruleset hinzufügen.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Offener Poker-Raum: jeder mit dem Raumcode darf lesen/schreiben.
+    // Kein Auth nötig; Räume sind kurzlebig und enthalten keine sensiblen Daten.
+    match /pokerRooms/{roomId} {
+      allow read, write: if true;
+    }
+  }
+}
