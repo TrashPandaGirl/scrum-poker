@@ -45,9 +45,16 @@
 - [x] Zuschauer dezent anzeigen (👁 Leiste)
 - [x] End-to-End getestet: default-Zuschauer, Switch, Sitze, Play-Anim, Sweep, nur-Schätzer-Auswertung
 
-## Offen / optional
-- [ ] Dead CSS aufräumen (.deck/.card/.participants — durch Tisch ersetzt)
+## Finalisierung
+- [x] Türkis-Theming (--primary #009bac wienit-Türkis) — verifiziert
+- [x] Dead CSS entfernt (.deck/.card/.participants/.room__actions)
 - [x] Echtes Logo eingesetzt: wienit (logo-wienit.svg, transparent) → Navy-Karte mit weißem Medaillon
+- [x] Git-Repo + GitHub (TrashPandaGirl/scrum-poker), Deploy auf gh-pages
+- [x] Live verifiziert: https://trashpandagirl.github.io/scrum-poker/ (HTTP 200, Assets 200)
+
+## Offen / optional
+- [ ] Firebase-Bundle ist ~500 kB — bei Bedarf Code-Splitting / nur genutzte Firestore-Teile
+- [ ] Räume automatisch aufräumen (TTL)
 
 ## Review
 - [x] End-to-End verifiziert: erstellen → beitreten → abstimmen → aufdecken → Auswertung → neue Runde
