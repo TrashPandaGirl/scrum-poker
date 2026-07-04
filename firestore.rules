@@ -1,17 +1,44 @@
 rules_version = '2';
 
-// Regeln für die Scrum-Poker-Collection im Projekt epicscrummasterkastl.
-// WICHTIG: Beim Deploy per CLI wird das GESAMTE Ruleset des Projekts ersetzt.
-// Wenn EpicScrumMasterKastl eigene Collections nutzt, müssen deren match-Blöcke
-// hier mit aufgenommen werden — sonst nur diesen Block in der Firebase Console
-// zum bestehenden Ruleset hinzufügen.
+// Gehärtete Regeln für die Scrum-Poker-Collection (Projekt epicscrummasterkastl).
+//
+// WICHTIG beim Einfügen in der Firebase Console:
+//   Nur den `match /pokerRooms/...`-Block zum BESTEHENDEN Ruleset hinzufügen –
+//   die match-Blöcke der anderen App (EpicScrumMasterKastl) NICHT überschreiben.
+//   Beim CLI-Deploy dieser Datei wird hingegen das GESAMTE Ruleset ersetzt.
+//
+// Schutzniveau (bewusste Grenze ohne Auth/App Check):
+//   - Lesen ist offen (jeder mit dem Raumcode; systembedingt bei reiner Client-App).
+//   - Schreiben nur mit gültiger Raum-Struktur und Größenlimits -> stoppt Müll-,
+//     Riesen- und Vandalismus-Writes.
+//   - Löschen ist verboten -> keine fremdgelöschten Räume.
+//   Wer den Raumcode kennt, kann weiterhin valide Daten schreiben. Für echten
+//   Abuse-Schutz zusätzlich App Check + (anonyme) Auth aktivieren.
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Offener Poker-Raum: jeder mit dem Raumcode darf lesen/schreiben.
-    // Kein Auth nötig; Räume sind kurzlebig und enthalten keine sensiblen Daten.
     match /pokerRooms/{roomId} {
-      allow read, write: if true;
+
+      function validRoom(d) {
+        return d.keys().hasOnly(
+                 ['scale', 'revealed', 'votes', 'admins', 'spectators',
+                  'round', 'ticket', 'sheet', 'createdAt'])
+               && d.revealed is bool
+               && d.round is int && d.round >= 1 && d.round < 100000
+               && d.ticket is string && d.ticket.size() <= 60
+               && d.scale is map
+               && d.scale.label is string && d.scale.label.size() <= 40
+               && d.scale.values is list && d.scale.values.size() <= 40
+               && d.votes is map && d.votes.size() <= 100
+               && d.admins is list && d.admins.size() <= 100
+               && d.spectators is list && d.spectators.size() <= 100
+               && d.sheet is list && d.sheet.size() <= 1000;
+      }
+
+      allow read: if true;
+      allow create, update: if validRoom(request.resource.data)
+                            && roomId.size() <= 16;
+      allow delete: if false;
     }
   }
 }

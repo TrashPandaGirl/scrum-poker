@@ -2,3 +2,7 @@ node_modules
 dist
 .DS_Store
 *.log
+
+# Lokale Firebase-Config (nicht ins Repo; .env.example dient als Vorlage)
+.env
+.env.*.local

@@ -1,10 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PRESET_SCALES, parseCustomScale, withExtras } from '../scales.js'
 import { createRoom, generateRoomCode } from '../room.js'
 
 export default function Home({ onEnter }) {
   const [name, setName] = useState('')
   const [joinCode, setJoinCode] = useState('')
+
+  // Einladungslink (…/?room=CODE) → Beitreten-Code vorbelegen
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search).get('room')
+    if (param) setJoinCode(param.toUpperCase())
+  }, [])
   const [scaleKey, setScaleKey] = useState('fibonacci')
   const [customInput, setCustomInput] = useState(
     PRESET_SCALES.fibonacci.values.join(', '),

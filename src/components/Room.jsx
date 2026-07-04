@@ -108,6 +108,7 @@ function PlayCard({ value, revealed, delay }) {
 export default function Room({ code, name, onLeave }) {
   const [room, setRoom] = useState(undefined) // undefined = lädt, null = existiert nicht
   const [copied, setCopied] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
   const [agreed, setAgreed] = useState('') // vom Admin gewählte Einigung ('' = Default = Modus)
   const [ticketDraft, setTicketDraft] = useState('')
   const ticketFocused = useRef(false)
@@ -150,6 +151,18 @@ export default function Room({ code, name, onLeave }) {
     navigator.clipboard?.writeText(code).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
+    })
+  }
+
+  function copyLink() {
+    // Absoluter Link auf Basis der aktuellen Seite (funktioniert auf gh-pages und lokal)
+    const url = new URL(window.location.href)
+    url.search = ''
+    url.hash = ''
+    url.searchParams.set('room', code)
+    navigator.clipboard?.writeText(url.toString()).then(() => {
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 1500)
     })
   }
 
@@ -266,9 +279,18 @@ export default function Room({ code, name, onLeave }) {
   return (
     <div className="room">
       <div className="room__bar">
-        <div className="room__code" onClick={copyCode} title="Zum Kopieren klicken">
-          Raum <strong>{code}</strong>
-          <span className="room__copy">{copied ? '✓ kopiert' : '📋'}</span>
+        <div className="room__ident">
+          <div className="room__code" onClick={copyCode} title="Raumcode kopieren">
+            Raum <strong>{code}</strong>
+            <span className="room__copy">{copied ? '✓ kopiert' : '📋'}</span>
+          </div>
+          <button
+            className="btn btn--ghost room__link"
+            onClick={copyLink}
+            title="Einladungslink kopieren"
+          >
+            {linkCopied ? '✓ Link kopiert' : '🔗 Link kopieren'}
+          </button>
         </div>
         <div className="room__meta">
           {isAdmin ? (
