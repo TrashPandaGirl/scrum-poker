@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   subscribeRoom,
   ensurePresence,
@@ -6,9 +6,11 @@ import {
   removeVoter,
   reveal,
   resetRound,
+  finishRound,
   grantAdmin,
   revokeAdmin,
   setSpectating,
+  setTicket,
 } from '../room.js'
 import { CARD_BACK_LOGO } from '../cardBack.js'
 import Results from './Results.jsx'
@@ -16,6 +18,45 @@ import Results from './Results.jsx'
 // Aufdeck-Sweep: gesamt ~2s (unabhängig von der Anzahl), pro Karte ein Flip.
 const REVEAL_TOTAL_MS = 2000
 const FLIP_MS = 500
+
+// Häufigster Wert (Modus) – Default-Vorschlag für die Einigung.
+function computeMode(values) {
+  if (!values.length) return ''
+  const counts = {}
+  for (const v of values) counts[v] = (counts[v] || 0) + 1
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0]
+}
+
+// Refinement-Log: pro abgeschlossener Runde eine Zeile
+// (Ticket · Schätzungen ohne Namen · Einigung).
+function RefinementSheet({ sheet }) {
+  if (!Array.isArray(sheet) || sheet.length === 0) return null
+  return (
+    <div className="sheet">
+      <h2 className="sheet__title">📋 Refinement-Sheet</h2>
+      <div className="sheet__rows">
+        <div className="sheet__row sheet__row--head">
+          <span>Ticket</span>
+          <span>Schätzungen</span>
+          <span>Einigung</span>
+        </div>
+        {sheet.map((row, i) => (
+          <div className="sheet__row" key={i}>
+            <span className="sheet__ticket">{row.ticket || '—'}</span>
+            <div className="sheet__cards">
+              {(row.estimates || []).map((v, j) => (
+                <span className="mini-card" key={j}>
+                  {v}
+                </span>
+              ))}
+            </div>
+            <span className="sheet__agreed">{row.agreed || '–'}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 // Eine gespielte Karte in der Tischmitte: verdeckt (Logo-Rückseite) → Flip zur Zahl.
 function PlayCard({ value, revealed, delay }) {
@@ -34,6 +75,14 @@ function PlayCard({ value, revealed, delay }) {
 export default function Room({ code, name, onLeave }) {
   const [room, setRoom] = useState(undefined) // undefined = lädt, null = existiert nicht
   const [copied, setCopied] = useState(false)
+  const [agreed, setAgreed] = useState('') // vom Admin gewählte Einigung ('' = Default = Modus)
+  const [ticketDraft, setTicketDraft] = useState('')
+  const ticketFocused = useRef(false)
+
+  // Ticket-Feld mit dem Raum synchronisieren, solange nicht gerade getippt wird
+  useEffect(() => {
+    if (!ticketFocused.current) setTicketDraft(room?.ticket ?? '')
+  }, [room?.ticket])
 
   // Präsenz anmelden + Live-Abo
   useEffect(() => {
@@ -109,11 +158,40 @@ export default function Room({ code, name, onLeave }) {
   // Nur Schätzer-Stimmen in die Auswertung
   const estimatorVotes = Object.fromEntries(estimators.map((n) => [n, votes[n]]))
 
+  // Abgegebene Schätzungen (ohne Namen), sortiert nach Skalen-Reihenfolge → fürs Sheet & Modus
+  const castValues = estimators
+    .map((n) => votes[n])
+    .filter((v) => v !== null)
+    .sort((a, b) => scale.values.indexOf(a) - scale.values.indexOf(b))
+  const mode = computeMode(castValues)
+  const effectiveAgreed = agreed || mode
+
   // Gestaffelte Aufdeck-Verzögerung links → rechts, gesamt ~REVEAL_TOTAL_MS
   const revealDelay = (i) =>
     estimators.length <= 1
       ? 0
       : (i / (estimators.length - 1)) * (REVEAL_TOTAL_MS - FLIP_MS)
+
+  function commitTicket() {
+    ticketFocused.current = false
+    const next = ticketDraft.trim()
+    if (next !== (room.ticket || '')) setTicket(code, next)
+  }
+
+  function handleFinish() {
+    finishRound(code, {
+      sheet: room.sheet,
+      entry: { ticket: (room.ticket || '').trim(), estimates: castValues, agreed: effectiveAgreed },
+      names: present,
+      round,
+    })
+    setAgreed('')
+  }
+
+  function handleReEstimate() {
+    resetRound(code, present, round)
+    setAgreed('')
+  }
 
   function toggleAdmin(pName, pIsAdmin) {
     if (pIsAdmin) {
@@ -160,7 +238,20 @@ export default function Room({ code, name, onLeave }) {
           <span className="room__copy">{copied ? '✓ kopiert' : '📋'}</span>
         </div>
         <div className="room__meta">
-          <span>Runde {round}</span>
+          {isAdmin ? (
+            <input
+              className="ticket-input"
+              value={ticketDraft}
+              placeholder={`Runde ${round}`}
+              title="Ticket-Key eintragen (optional)"
+              onFocus={() => (ticketFocused.current = true)}
+              onChange={(e) => setTicketDraft(e.target.value)}
+              onBlur={commitTicket}
+              onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+            />
+          ) : (
+            <span className="ticket-static">{room.ticket || `Runde ${round}`}</span>
+          )}
           <span>· {scale.label}</span>
           <span>· {votedCount}/{estimators.length} 🃏</span>
         </div>
@@ -222,7 +313,7 @@ export default function Room({ code, name, onLeave }) {
           )}
         </div>
 
-        {/* Aktion: Admin deckt auf / neue Runde */}
+        {/* Aktion: Admin deckt auf / schließt Runde ab */}
         <div className="table__actions">
           {isAdmin ? (
             !revealed ? (
@@ -234,12 +325,29 @@ export default function Room({ code, name, onLeave }) {
                 Aufdecken
               </button>
             ) : (
-              <button
-                className="btn btn--primary"
-                onClick={() => resetRound(code, present, round)}
-              >
-                Neue Runde
-              </button>
+              <div className="finish-actions">
+                <label className="agree">
+                  Einigung:
+                  <select
+                    className="agree__select"
+                    value={effectiveAgreed}
+                    onChange={(e) => setAgreed(e.target.value)}
+                  >
+                    <option value="">–</option>
+                    {scale.values.map((v) => (
+                      <option key={v} value={v}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button className="btn btn--primary" onClick={handleFinish}>
+                  Übernehmen &amp; nächstes Ticket
+                </button>
+                <button className="btn btn--ghost" onClick={handleReEstimate}>
+                  Nochmal schätzen
+                </button>
+              </div>
             )
           ) : (
             <p className="room__hint">
@@ -298,6 +406,9 @@ export default function Room({ code, name, onLeave }) {
           })}
         </div>
       )}
+
+      {/* Refinement-Log */}
+      <RefinementSheet sheet={room.sheet} />
     </div>
   )
 }

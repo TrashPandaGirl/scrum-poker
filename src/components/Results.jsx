@@ -1,6 +1,4 @@
-import { isNumeric } from '../scales.js'
-
-// Auswertung der aufgedeckten Stimmen: Durchschnitt, Verteilung, Konsens.
+// Auswertung der aufgedeckten Stimmen: Verteilung + Konsens (ohne Durchschnitt).
 export default function Results({ votes }) {
   const cast = Object.entries(votes).filter(([, v]) => v !== null)
   if (cast.length === 0) {
@@ -11,16 +9,6 @@ export default function Results({ votes }) {
   const counts = {}
   for (const [, v] of cast) counts[v] = (counts[v] || 0) + 1
   const distribution = Object.entries(counts).sort((a, b) => b[1] - a[1])
-
-  const numericValues = cast
-    .map(([, v]) => v)
-    .filter(isNumeric)
-    .map(Number)
-
-  const avg =
-    numericValues.length > 0
-      ? numericValues.reduce((a, b) => a + b, 0) / numericValues.length
-      : null
 
   const uniqueValues = new Set(cast.map(([, v]) => v))
   const consensus = uniqueValues.size === 1
@@ -34,9 +22,6 @@ export default function Results({ votes }) {
           <span className="badge badge--consensus">✅ Konsens: {distribution[0][0]}</span>
         ) : (
           <span className="badge">{uniqueValues.size} verschiedene Werte</span>
-        )}
-        {avg !== null && (
-          <span className="badge">Ø {avg.toFixed(1)}</span>
         )}
       </div>
 

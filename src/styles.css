@@ -627,6 +627,139 @@ select:focus {
   padding: 24px 0;
 }
 
+/* ── Ticket-Feld im Header ────────────────────────── */
+.ticket-input {
+  padding: 4px 8px;
+  width: 130px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+}
+
+.ticket-input::placeholder {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.ticket-input:focus {
+  border-style: solid;
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+.ticket-static {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* ── Einigung + Abschluss ─────────────────────────── */
+.finish-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.agree {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.agree__select {
+  padding: 8px 10px;
+  font-weight: 700;
+  min-width: 64px;
+}
+
+/* ── Refinement-Sheet ─────────────────────────────── */
+.sheet {
+  margin-top: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.sheet__title {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.sheet__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sheet__row {
+  display: grid;
+  grid-template-columns: 130px 1fr 70px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.sheet__row--head {
+  background: transparent;
+  padding: 0 12px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sheet__ticket {
+  font-weight: 700;
+  color: var(--primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet__cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.mini-card {
+  min-width: 26px;
+  height: 34px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  background: #fff;
+  color: #1e1b4b;
+  border: 1px solid var(--primary);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.sheet__agreed {
+  justify-self: end;
+  min-width: 44px;
+  height: 36px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 800;
+}
+
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 560px) {
   .home__cards {

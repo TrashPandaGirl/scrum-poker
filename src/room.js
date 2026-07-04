@@ -35,6 +35,8 @@ export async function createRoom(code, scale, creatorName) {
     admins: [creatorName], // Namen mit Aufdeck-/Verwaltungsrechten; Ersteller ist Admin
     spectators: [creatorName], // Namen die NICHT schätzen; Ersteller (SM/PO) ist default Zuschauer
     round: 1,
+    ticket: '', // optionaler Jira-Key der aktuellen Runde
+    sheet: [], // Refinement-Log: [{ ticket, estimates:[...], agreed }]
     createdAt: serverTimestamp(),
   })
 }
@@ -86,6 +88,11 @@ export async function reveal(code) {
   await updateDoc(roomRef(code), { revealed: true })
 }
 
+// Setzt den Ticket-Key der aktuellen Runde (leer = keiner).
+export async function setTicket(code, ticket) {
+  await updateDoc(roomRef(code), { ticket })
+}
+
 export async function grantAdmin(code, name) {
   await updateDoc(roomRef(code), { admins: arrayUnion(name) })
 }
@@ -94,7 +101,7 @@ export async function revokeAdmin(code, name) {
   await updateDoc(roomRef(code), { admins: arrayRemove(name) })
 }
 
-// Neue Runde: alle Teilnehmer bleiben, ihre Stimmen werden auf null gesetzt.
+// Nochmal schätzen: Stimmen leeren, Ticket bleibt (z.B. bei Uneinigkeit).
 export async function resetRound(code, names, round) {
   const clearedVotes = {}
   for (const name of names) clearedVotes[name] = null
@@ -102,5 +109,18 @@ export async function resetRound(code, names, round) {
     votes: clearedVotes,
     revealed: false,
     round: (round || 1) + 1,
+  })
+}
+
+// Runde abschließen: Ergebnis ins Refinement-Sheet loggen, Ticket leeren, nächste Runde.
+export async function finishRound(code, { sheet, entry, names, round }) {
+  const clearedVotes = {}
+  for (const name of names) clearedVotes[name] = null
+  await updateDoc(roomRef(code), {
+    sheet: [...(sheet || []), entry],
+    votes: clearedVotes,
+    revealed: false,
+    round: (round || 1) + 1,
+    ticket: '',
   })
 }
