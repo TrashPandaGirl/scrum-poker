@@ -201,6 +201,7 @@ select:focus {
   color: var(--muted);
   font-size: 0.9rem;
   display: flex;
+  align-items: center;
   gap: 6px;
 }
 
