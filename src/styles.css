@@ -600,7 +600,7 @@ select:focus {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  padding: 30px 0 10px;
+  padding: 30px 0 28px;
   min-height: 130px;
 }
 
@@ -700,7 +700,7 @@ select:focus {
 /* ── Refinement-Sheet ─────────────────────────────── */
 .sheet {
   position: relative;
-  margin-top: 8px;
+  margin-top: 24px;
 }
 
 /* Der aufgenommene Bereich = die Karte selbst (damit das PNG sauber aussieht) */
@@ -814,5 +814,12 @@ select:focus {
     width: 52px;
     height: 76px;
     font-size: 1.1rem;
+  }
+  /* Auf schmalen Screens Copy-Button über den Titel statt daneben */
+  .sheet__copy {
+    position: static;
+    display: block;
+    width: fit-content;
+    margin: 0 0 12px auto;
   }
 }
