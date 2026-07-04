@@ -143,6 +143,12 @@ select:focus {
   margin-top: auto;
 }
 
+.scale-hint {
+  margin: -4px 0 14px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
 .error {
   margin-top: 16px;
   color: var(--danger);
@@ -680,11 +686,25 @@ select:focus {
 
 /* ── Refinement-Sheet ─────────────────────────────── */
 .sheet {
+  position: relative;
   margin-top: 8px;
+}
+
+/* Der aufgenommene Bereich = die Karte selbst (damit das PNG sauber aussieht) */
+.sheet__capture {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px 20px;
+}
+
+.sheet__copy {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 2;
+  padding: 7px 12px;
+  font-size: 0.85rem;
 }
 
 .sheet__title {

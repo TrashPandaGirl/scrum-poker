@@ -1,16 +1,27 @@
 import { useState } from 'react'
-import { PRESET_SCALES, parseCustomScale } from '../scales.js'
+import { PRESET_SCALES, parseCustomScale, withExtras } from '../scales.js'
 import { createRoom, generateRoomCode } from '../room.js'
 
 export default function Home({ onEnter }) {
   const [name, setName] = useState('')
   const [joinCode, setJoinCode] = useState('')
   const [scaleKey, setScaleKey] = useState('fibonacci')
-  const [customInput, setCustomInput] = useState('1, 2, 3, 5, 8, ?')
+  const [customInput, setCustomInput] = useState(
+    PRESET_SCALES.fibonacci.values.join(', '),
+  )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   const trimmedName = name.trim()
+
+  // Beim Wechsel auf "Eigene Reihe" das Textfeld mit der zuvor gewählten Reihe vorbelegen.
+  function handleScaleChange(e) {
+    const next = e.target.value
+    if (next === 'custom' && scaleKey !== 'custom' && PRESET_SCALES[scaleKey]) {
+      setCustomInput(PRESET_SCALES[scaleKey].values.join(', '))
+    }
+    setScaleKey(next)
+  }
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -23,9 +34,11 @@ export default function Home({ onEnter }) {
       if (values.length < 2) {
         return setError('Custom-Skala braucht mindestens 2 Werte (kommagetrennt).')
       }
-      scale = { label: 'Custom', values }
+      // ? und ☕ werden immer automatisch angehängt
+      scale = { label: 'Custom', values: withExtras(values) }
     } else {
-      scale = PRESET_SCALES[scaleKey]
+      const preset = PRESET_SCALES[scaleKey]
+      scale = { label: preset.label, values: withExtras(preset.values) }
     }
 
     setBusy(true)
@@ -69,14 +82,10 @@ export default function Home({ onEnter }) {
 
           <div className="field">
             <label htmlFor="scale">Skala</label>
-            <select
-              id="scale"
-              value={scaleKey}
-              onChange={(e) => setScaleKey(e.target.value)}
-            >
+            <select id="scale" value={scaleKey} onChange={handleScaleChange}>
               {Object.entries(PRESET_SCALES).map(([key, s]) => (
                 <option key={key} value={key}>
-                  {s.label} ({s.values.slice(0, 5).join(', ')}…)
+                  {s.label} ({s.values.join(', ')})
                 </option>
               ))}
               <option value="custom">Eigene Reihe…</option>
@@ -90,11 +99,13 @@ export default function Home({ onEnter }) {
                 id="custom"
                 type="text"
                 value={customInput}
-                placeholder="1, 2, 3, 5, 8, ?"
+                placeholder="1, 2, 3, 5, 8"
                 onChange={(e) => setCustomInput(e.target.value)}
               />
             </div>
           )}
+
+          <p className="scale-hint">? und ☕ werden automatisch ergänzt.</p>
 
           <button type="submit" className="btn btn--primary" disabled={busy}>
             {busy ? 'Erstelle…' : 'Raum erstellen'}

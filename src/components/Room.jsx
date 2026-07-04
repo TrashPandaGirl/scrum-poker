@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import html2canvas from 'html2canvas'
 import {
   subscribeRoom,
   ensurePresence,
@@ -28,31 +29,63 @@ function computeMode(values) {
 }
 
 // Refinement-Log: pro abgeschlossener Runde eine Zeile
-// (Ticket · Schätzungen ohne Namen · Einigung).
+// (Ticket · Schätzungen ohne Namen · Einigung). Als PNG in die Zwischenablage kopierbar.
 function RefinementSheet({ sheet }) {
+  const captureRef = useRef(null)
+  const [copied, setCopied] = useState(false)
+
   if (!Array.isArray(sheet) || sheet.length === 0) return null
+
+  async function copyPng() {
+    const canvas = await html2canvas(captureRef.current, {
+      scale: 2,
+      backgroundColor: '#0f172a',
+      useCORS: true,
+    })
+    canvas.toBlob(async (blob) => {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob }),
+        ])
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      } catch {
+        // Fallback: Download
+        const a = document.createElement('a')
+        a.href = canvas.toDataURL('image/png')
+        a.download = 'refinement-sheet.png'
+        a.click()
+      }
+    }, 'image/png')
+  }
+
   return (
     <div className="sheet">
-      <h2 className="sheet__title">📋 Refinement-Sheet</h2>
-      <div className="sheet__rows">
-        <div className="sheet__row sheet__row--head">
-          <span>Ticket</span>
-          <span>Schätzungen</span>
-          <span>Einigung</span>
-        </div>
-        {sheet.map((row, i) => (
-          <div className="sheet__row" key={i}>
-            <span className="sheet__ticket">{row.ticket || '—'}</span>
-            <div className="sheet__cards">
-              {(row.estimates || []).map((v, j) => (
-                <span className="mini-card" key={j}>
-                  {v}
-                </span>
-              ))}
-            </div>
-            <span className="sheet__agreed">{row.agreed || '–'}</span>
+      <button className="btn btn--ghost sheet__copy" onClick={copyPng}>
+        {copied ? '✓ Kopiert!' : '📷 Als PNG kopieren'}
+      </button>
+      <div className="sheet__capture" ref={captureRef}>
+        <h2 className="sheet__title">📋 Refinement-Sheet</h2>
+        <div className="sheet__rows">
+          <div className="sheet__row sheet__row--head">
+            <span>Ticket</span>
+            <span>Schätzungen</span>
+            <span>Einigung</span>
           </div>
-        ))}
+          {sheet.map((row, i) => (
+            <div className="sheet__row" key={i}>
+              <span className="sheet__ticket">{row.ticket || '—'}</span>
+              <div className="sheet__cards">
+                {(row.estimates || []).map((v, j) => (
+                  <span className="mini-card" key={j}>
+                    {v}
+                  </span>
+                ))}
+              </div>
+              <span className="sheet__agreed">{row.agreed || '–'}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
