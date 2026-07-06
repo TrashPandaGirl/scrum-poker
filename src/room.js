@@ -8,10 +8,17 @@ import {
   deleteField,
   arrayUnion,
   arrayRemove,
+  FieldPath,
 } from 'firebase/firestore'
 import { db } from './firebase'
 
 const COLLECTION = 'pokerRooms'
+
+// Ein einzelner Vote-Schlüssel als FieldPath – so wird der Name literal behandelt
+// (Punkte/Sonderzeichen zerschießen sonst den Feldpfad und verschachteln die Daten).
+function votePath(name) {
+  return new FieldPath('votes', name)
+}
 
 // 4-stelliger, gut lesbarer Raumcode (keine leicht verwechselbaren Zeichen).
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -55,32 +62,39 @@ export async function ensurePresence(code, name) {
   if (!snap.exists()) return false
   const votes = snap.data().votes || {}
   if (!(name in votes)) {
-    await updateDoc(roomRef(code), { [`votes.${name}`]: null })
+    await updateDoc(roomRef(code), votePath(name), null)
   }
   return true
 }
 
 export async function castVote(code, name, value) {
-  await updateDoc(roomRef(code), { [`votes.${name}`]: value })
+  await updateDoc(roomRef(code), votePath(name), String(value))
 }
 
 export async function removeVoter(code, name) {
-  await updateDoc(roomRef(code), {
-    [`votes.${name}`]: deleteField(),
-    admins: arrayRemove(name),
-    spectators: arrayRemove(name),
-  })
+  await updateDoc(
+    roomRef(code),
+    votePath(name),
+    deleteField(),
+    'admins',
+    arrayRemove(name),
+    'spectators',
+    arrayRemove(name),
+  )
 }
 
 // Wechselt zwischen Schätzer und Zuschauer. Als Zuschauer wird die Stimme geleert.
 export async function setSpectating(code, name, spectating) {
   if (spectating) {
-    await updateDoc(roomRef(code), {
-      spectators: arrayUnion(name),
-      [`votes.${name}`]: null,
-    })
+    await updateDoc(
+      roomRef(code),
+      'spectators',
+      arrayUnion(name),
+      votePath(name),
+      null,
+    )
   } else {
-    await updateDoc(roomRef(code), { spectators: arrayRemove(name) })
+    await updateDoc(roomRef(code), 'spectators', arrayRemove(name))
   }
 }
 

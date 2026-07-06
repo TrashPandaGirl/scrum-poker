@@ -11,3 +11,7 @@
 ## Firebase Firestore Rules bei geteiltem Projekt
 - **Pattern:** Wiederverwendung eines bestehenden Firebase-Projekts scheitert an Security-Rules, wenn eine neue Collection nicht in den Rules erlaubt ist (`permission-denied`).
 - **Regel:** Vor dem Wiederverwenden prüfen/klären, ob die neue Collection in den Firestore-Rules freigegeben ist. Rules-Deploy von lokal überschreibt die komplette Ruleset — nie blind deployen; stattdessen match-Block in der Console ergänzen lassen oder Rules versioniert im Projekt halten.
+
+## Firestore-Feldpfade mit User-Input (blank-screen-Crash)
+- **Pattern:** `updateDoc(ref, { [`votes.${name}`]: v })` interpretiert `.` im Namen als verschachtelten Feldpfad. Name mit Punkt in der Mitte („T.K") → verschachtelte Daten `{T:{K:v}}` → React rendert ein Objekt → „Objects are not valid as a React child" → **ganze App blank** (kein Error-Boundary = weißer Screen). Name endet mit „." → `updateDoc` wirft sofort.
+- **Regel:** Dynamische Feldpfade aus User-Input NIE als String bauen. `new FieldPath('votes', name)` benutzen (behandelt `name` literal). Zusätzlich: (1) Werte defensiv normalisieren (nur erwartete Primitive rendern), (2) IMMER eine Error-Boundary um die App, damit ein einzelner Fehler nie alles weißschießt. Vote-Werte konsistent als `String(value)` speichern.

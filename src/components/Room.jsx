@@ -183,7 +183,14 @@ export default function Room({ code, name, onLeave }) {
     )
   }
 
-  const { scale, votes, revealed, round } = room
+  const { scale, revealed, round } = room
+  // Vote-Werte defensiv normalisieren: nur Strings sind echte Stimmen, alles andere
+  // (z.B. verschachtelte Alt-Daten) gilt als "noch nicht gewählt" – nie ein Objekt rendern.
+  const rawVotes = room.votes || {}
+  const votes = {}
+  for (const k of Object.keys(rawVotes)) {
+    votes[k] = typeof rawVotes[k] === 'string' ? rawVotes[k] : null
+  }
   const spectators = Array.isArray(room.spectators) ? room.spectators : []
   const admins = Array.isArray(room.admins) ? room.admins : null
   const adminsDefined = admins && admins.length > 0

@@ -262,6 +262,33 @@ select:focus {
   margin-top: 16px;
 }
 
+.crash {
+  max-width: 520px;
+  margin: 60px auto;
+  padding: 28px 24px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+}
+
+.crash h2 {
+  margin: 0 0 8px;
+}
+
+.crash p {
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+
+.crash__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 /* ── Ergebnis ─────────────────────────────────────── */
 .results {
   background: var(--surface);
