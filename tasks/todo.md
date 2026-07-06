@@ -1,5 +1,15 @@
 # Scrum Poker — Todo
 
+## Härtung + Link-UX (aktuell)
+Stresstest-Befunde: Datenschicht robust (40 Teilnehmer/Vote-Spam/200 Runden ~12KB ok).
+Pitfalls: leerer Name → throw; `__reserved__`-Muster → throw; lange Namen = Layout-Risiko.
+- [x] MUST: Link-Cache-Bug — `?room=` gewinnt über gecachte Session (verifiziert)
+- [x] MUST: Einstiegs-Flow — fokussierter JoinRoom-Screen (Name vorbelegt, autofocus, 1-Tap)
+- [x] MUST: Name-Validierung (nicht leer, ≤24, kein `__..__`) an allen Eingängen + defensiv in room.js
+- [x] MUST: Snapperes Aufdecken (Sweep 2s→1s, Flip 350ms)
+- [x] SHOULD: Letzten Namen persistieren (scrumPoker.name; Prefill Join & Home)
+- [x] Verifiziert: Link laptop→handy-Szenario, alle Routing-Fälle, Aufdecken, Namensvalidierung
+
 ## Stack & Entscheidungen
 - React + Vite
 - Echtzeit über Firebase Firestore (Projekt `epicscrummasterkastl`, Collection `pokerRooms`)

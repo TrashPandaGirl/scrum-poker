@@ -16,9 +16,10 @@ import {
 import { CARD_BACK_LOGO } from '../cardBack.js'
 import Results from './Results.jsx'
 
-// Aufdeck-Sweep: gesamt ~2s (unabhängig von der Anzahl), pro Karte ein Flip.
-const REVEAL_TOTAL_MS = 2000
-const FLIP_MS = 500
+// Aufdeck-Sweep: gesamt ~1s (unabhängig von der Anzahl), pro Karte ein Flip.
+// Kurzes Fenster = weniger sichtbarer Versatz zwischen Geräten (gefühlter Sync).
+const REVEAL_TOTAL_MS = 1000
+const FLIP_MS = 350
 
 // Häufigster Wert (Modus) – Default-Vorschlag für die Einigung.
 function computeMode(values) {

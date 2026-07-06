@@ -1,16 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { PRESET_SCALES, parseCustomScale, withExtras } from '../scales.js'
 import { createRoom, generateRoomCode } from '../room.js'
+import { validName, loadName, NAME_MAX } from '../name.js'
 
 export default function Home({ onEnter }) {
-  const [name, setName] = useState('')
+  const [name, setName] = useState(loadName())
   const [joinCode, setJoinCode] = useState('')
-
-  // Einladungslink (…/?room=CODE) → Beitreten-Code vorbelegen
-  useEffect(() => {
-    const param = new URLSearchParams(window.location.search).get('room')
-    if (param) setJoinCode(param.toUpperCase())
-  }, [])
   const [scaleKey, setScaleKey] = useState('fibonacci')
   const [customInput, setCustomInput] = useState(
     PRESET_SCALES.fibonacci.values.join(', '),
@@ -32,7 +27,7 @@ export default function Home({ onEnter }) {
   async function handleCreate(e) {
     e.preventDefault()
     setError('')
-    if (!trimmedName) return setError('Bitte gib deinen Namen ein.')
+    if (!validName(trimmedName)) return setError('Bitte gib einen gültigen Namen ein (max. 24 Zeichen).')
 
     let scale
     if (scaleKey === 'custom') {
@@ -62,7 +57,7 @@ export default function Home({ onEnter }) {
   function handleJoin(e) {
     e.preventDefault()
     setError('')
-    if (!trimmedName) return setError('Bitte gib deinen Namen ein.')
+    if (!validName(trimmedName)) return setError('Bitte gib einen gültigen Namen ein (max. 24 Zeichen).')
     const code = joinCode.trim().toUpperCase()
     if (code.length < 4) return setError('Bitte gültigen Raumcode eingeben.')
     onEnter(code, trimmedName)
@@ -76,7 +71,7 @@ export default function Home({ onEnter }) {
           id="name"
           type="text"
           value={name}
-          maxLength={24}
+          maxLength={NAME_MAX}
           placeholder="z.B. Jana"
           onChange={(e) => setName(e.target.value)}
         />

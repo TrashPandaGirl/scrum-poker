@@ -58,6 +58,7 @@ export function subscribeRoom(code, onData) {
 // Meldet einen Teilnehmer an, ohne eine bestehende Stimme zu überschreiben
 // (wichtig bei Reload/Reconnect). Gibt false zurück, wenn der Raum nicht existiert.
 export async function ensurePresence(code, name) {
+  if (!name) return false
   const snap = await getDoc(roomRef(code))
   if (!snap.exists()) return false
   const votes = snap.data().votes || {}
@@ -68,6 +69,7 @@ export async function ensurePresence(code, name) {
 }
 
 export async function castVote(code, name, value) {
+  if (!name) return
   await updateDoc(roomRef(code), votePath(name), String(value))
 }
 
