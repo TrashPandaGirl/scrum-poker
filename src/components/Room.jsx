@@ -110,6 +110,7 @@ export default function Room({ code, name, onLeave }) {
   const [room, setRoom] = useState(undefined) // undefined = lädt, null = existiert nicht
   const [copied, setCopied] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
+  const [dragging, setDragging] = useState(false) // Karte wird gerade gezogen (Drop-Zone hervorheben)
   const [agreed, setAgreed] = useState('') // vom Admin gewählte Einigung ('' = Default = Modus)
   const [ticketDraft, setTicketDraft] = useState('')
   const ticketFocused = useRef(false)
@@ -208,6 +209,16 @@ export default function Room({ code, name, onLeave }) {
   const iAmSpectator = spectators.includes(name)
   const myVote = votes[name] ?? null
   const votedCount = estimators.filter((n) => votes[n] !== null).length
+  const canPlay = !iAmSpectator && !revealed // darf abstimmen (Klick ODER Drag&Drop)
+
+  // Drag&Drop: Karte auf den Tisch ziehen = abstimmen (rein additiv zum Klick).
+  function handleDrop(e) {
+    e.preventDefault()
+    setDragging(false)
+    if (!canPlay) return
+    const value = e.dataTransfer.getData('text/plain')
+    if (value) castVote(code, name, value)
+  }
 
   // Nur Schätzer-Stimmen in die Auswertung
   const estimatorVotes = Object.fromEntries(estimators.map((n) => [n, votes[n]]))
@@ -338,7 +349,18 @@ export default function Room({ code, name, onLeave }) {
 
       {/* Pokertisch */}
       <div className="table">
-        <div className="table__felt">
+        <div
+          className={`table__felt ${dragging ? 'table__felt--drop' : ''}`}
+          onDragOver={(e) => {
+            if (!canPlay) return
+            e.preventDefault()
+            e.dataTransfer.dropEffect = 'move'
+          }}
+          onDrop={handleDrop}
+        >
+          {dragging && canPlay && (
+            <div className="table__drophint">Hier ablegen zum Schätzen</div>
+          )}
           {estimators.length === 0 ? (
             <p className="table__empty">Warte auf Schätzer…</p>
           ) : (
@@ -449,25 +471,50 @@ export default function Room({ code, name, onLeave }) {
           👁 Du bist Zuschauer. Über den Schalter oben rechts kannst du mitschätzen.
         </p>
       ) : (
-        <div className="hand">
-          {scale.values.map((value, i) => {
-            const n = scale.values.length
-            const mid = (n - 1) / 2
-            const rot = (i - mid) * 3
-            const ty = Math.abs(i - mid) * 5
-            return (
-              <button
-                key={value}
-                className={`hand-card ${myVote === value ? 'hand-card--picked' : ''}`}
-                style={{ '--rot': `${rot}deg`, '--ty': `${ty}px`, zIndex: i }}
-                disabled={revealed}
-                onClick={() => castVote(code, name, value)}
-              >
-                {value}
-              </button>
-            )
-          })}
-        </div>
+        <>
+          {!revealed && (
+            <p className="hand-status" aria-live="polite">
+              {myVote !== null ? (
+                <>
+                  <span className="hand-status__check">✓</span> Deine Wahl:{' '}
+                  <strong>{myVote}</strong>
+                  <span className="hand-status__hint">
+                    {' '}
+                    — jederzeit änderbar bis zum Aufdecken
+                  </span>
+                </>
+              ) : (
+                'Karte klicken oder auf den Tisch ziehen'
+              )}
+            </p>
+          )}
+          <div className="hand">
+            {scale.values.map((value, i) => {
+              const n = scale.values.length
+              const mid = (n - 1) / 2
+              const rot = (i - mid) * 3
+              const ty = Math.abs(i - mid) * 5
+              return (
+                <button
+                  key={value}
+                  className={`hand-card ${myVote === value ? 'hand-card--picked' : ''}`}
+                  style={{ '--rot': `${rot}deg`, '--ty': `${ty}px`, zIndex: i }}
+                  disabled={revealed}
+                  draggable={!revealed}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', value)
+                    e.dataTransfer.effectAllowed = 'move'
+                    setDragging(true)
+                  }}
+                  onDragEnd={() => setDragging(false)}
+                  onClick={() => castVote(code, name, value)}
+                >
+                  {value}
+                </button>
+              )
+            })}
+          </div>
+        </>
       )}
 
       {/* Refinement-Log */}
