@@ -703,7 +703,7 @@ select:focus {
 /* Status über der Hand: zeigt die eigene Wahl + dass man sie ändern kann */
 .hand-status {
   text-align: center;
-  margin: 8px 0 0;
+  margin: 8px 0 4px;
   color: var(--muted);
   font-size: 0.95rem;
 }
@@ -728,7 +728,8 @@ select:focus {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  padding: 16px 0 28px;
+  /* Genug Luft oben, damit die angehobene (gewählte/gezogene) Karte den Status-Text nicht verdeckt */
+  padding: 44px 0 28px;
   min-height: 130px;
 }
 
